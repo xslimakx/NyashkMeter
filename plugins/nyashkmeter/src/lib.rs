@@ -248,6 +248,9 @@ impl Plugin for NyashkMeter {
     }
 
     fn process(&mut self, buffer: &mut Buffer, _aux: &mut AuxiliaryBuffers, _c: &mut impl ProcessContext<Self>) -> ProcessStatus {
+        nyashk_common::demo::sanitize(buffer);
+        #[cfg(feature = "standalone")]
+        nyashk_common::demo::fill(buffer, 48000.0);
         let Some(meter) = self.meter.as_mut() else { return ProcessStatus::Normal };
         let sh = &self.shared;
         if sh.reset.swap(false, Ordering::Relaxed) {

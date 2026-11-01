@@ -1844,43 +1844,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "nyashkair"
-version = "1.0.0"
-dependencies = [
- "nih_plug",
- "nih_plug_egui",
- "nyashk_common",
-]
-
-[[package]]
-name = "nyashkchannel"
-version = "1.0.0"
-dependencies = [
- "nih_plug",
- "nih_plug_egui",
- "nyashk_common",
-]
-
-[[package]]
-name = "nyashkeq"
-version = "1.0.0"
-dependencies = [
- "nih_plug",
- "nih_plug_egui",
- "nyashk_common",
-]
-
-[[package]]
 name = "nyashkmeter"
-version = "1.0.0"
-dependencies = [
- "nih_plug",
- "nih_plug_egui",
- "nyashk_common",
-]
-
-[[package]]
-name = "nyashkpre"
 version = "1.0.0"
 dependencies = [
  "nih_plug",

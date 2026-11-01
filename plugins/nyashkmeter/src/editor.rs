@@ -235,10 +235,7 @@ pub fn create(params: Arc<MeterParams>, shared: Arc<Shared>) -> Option<Box<dyn E
                             line.push(Pos2::new(xa + 1.0, dy(at(&st.smooth, fa, fb) + adj)));
                             peak.push(Pos2::new(xa + 1.0, dy(at(&st.hold, fa, fb) + adj)));
                         }
-                        let mut poly = line.clone();
-                        poly.push(Pos2::new(g.right(), g.bottom()));
-                        poly.push(Pos2::new(g.left(), g.bottom()));
-                        clip.add(egui::Shape::Path(egui::epaint::PathShape { points: poly, closed: true, fill: Color32::from_white_alpha(26), stroke: egui::epaint::PathStroke::NONE }));
+                        fill_under(&clip, &line, g.bottom(), Color32::from_white_alpha(26));
                         if p.hold.value() {
                             clip.add(egui::Shape::line(peak, PathStroke::new(1.0, Color32::from_white_alpha(80))));
                         }

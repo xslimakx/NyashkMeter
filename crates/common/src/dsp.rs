@@ -102,6 +102,13 @@ impl Coef {
         Coef { b0: b0 as f32, b1: (-b0) as f32, b2: 0.0, a1: ((k - 1.0) / (1.0 + k)) as f32, a2: 0.0 }
     }
 
+    /// First-order low-pass (6 dB/oct), bilinear.
+    pub fn lowpass1(fs: f32, f: f32) -> Coef {
+        let k = (std::f64::consts::PI * (f as f64).clamp(5.0, fs as f64 * 0.49) / fs as f64).tan();
+        let b0 = k / (1.0 + k);
+        Coef { b0: b0 as f32, b1: b0 as f32, b2: 0.0, a1: ((k - 1.0) / (1.0 + k)) as f32, a2: 0.0 }
+    }
+
     /// Band-pass with constant 0 dB peak gain.
     pub fn bandpass(fs: f32, f: f32, q: f32) -> Coef {
         let f = (f as f64).clamp(5.0, fs as f64 * 0.49);

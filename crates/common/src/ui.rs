@@ -51,8 +51,22 @@ pub fn knob<P: Param>(ui: &mut Ui, setter: &ParamSetter, p: &P, label: &str, cel
     knob_r(ui, setter, p, label, cell, tooltip, bipolar, 30.0)
 }
 
+/// Band colours (muted so they sit well on the black UI): used by the EQ and the channel strip.
+pub const C_LF: Color32 = Color32::from_rgb(0xd8, 0x62, 0x5c);
+pub const C_LMF: Color32 = Color32::from_rgb(0x86, 0xc2, 0x6e);
+pub const C_HMF: Color32 = Color32::from_rgb(0x5f, 0xa3, 0xe4);
+pub const C_HF: Color32 = Color32::from_rgb(0xc0, 0x92, 0xe0);
+pub const C_DYN: Color32 = Color32::from_rgb(0xe2, 0xb0, 0x58);
+pub const C_GATE: Color32 = Color32::from_rgb(0x58, 0xc4, 0xb8);
+
 #[allow(clippy::too_many_arguments)]
 pub fn knob_r<P: Param>(ui: &mut Ui, setter: &ParamSetter, p: &P, label: &str, cell: Rect, tooltip: &str, bipolar: bool, r: f32) -> KnobEv {
+    knob_ac(ui, setter, p, label, cell, tooltip, bipolar, r, WHITE)
+}
+
+/// Knob with an accent colour for the value arc and pointer.
+#[allow(clippy::too_many_arguments)]
+pub fn knob_ac<P: Param>(ui: &mut Ui, setter: &ParamSetter, p: &P, label: &str, cell: Rect, tooltip: &str, bipolar: bool, r: f32, accent: Color32) -> KnobEv {
     let c = Pos2::new(cell.center().x, cell.top() + r + 4.0);
     let hit = Rect::from_center_size(c, Vec2::splat(2.0 * r + 8.0));
     let resp = ui.allocate_rect(hit, Sense::click_and_drag());
@@ -116,9 +130,9 @@ pub fn knob_r<P: Param>(ui: &mut Ui, setter: &ParamSetter, p: &P, label: &str, c
     painter.circle_filled(pt(ring, 1.0), 2.0, LINE);
     let from = if bipolar { 0.5 } else { 0.0 };
     if (norm - from).abs() > 0.002 {
-        painter.add(egui::Shape::line(arc(from, norm), PathStroke::new(4.0, WHITE)));
-        painter.circle_filled(pt(ring, from), 2.0, WHITE);
-        painter.circle_filled(pt(ring, norm), 2.0, WHITE);
+        painter.add(egui::Shape::line(arc(from, norm), PathStroke::new(4.0, accent)));
+        painter.circle_filled(pt(ring, from), 2.0, accent);
+        painter.circle_filled(pt(ring, norm), 2.0, accent);
     }
     // round knob body
     let body = r * 0.72;
@@ -127,9 +141,9 @@ pub fn knob_r<P: Param>(ui: &mut Ui, setter: &ParamSetter, p: &P, label: &str, c
     painter.circle_filled(c, body * 0.84, Color32::from_rgb(24, 24, 24));
     painter.circle_stroke(c, body, Stroke::new(1.0, Color32::from_rgb(70, 70, 70)));
     // pointer
-    painter.line_segment([pt(body * 0.30, norm), pt(body * 0.80, norm)], Stroke::new(3.0, WHITE));
-    painter.circle_filled(pt(body * 0.80, norm), 1.5, WHITE);
-    painter.circle_filled(pt(body * 0.30, norm), 1.5, WHITE);
+    painter.line_segment([pt(body * 0.30, norm), pt(body * 0.80, norm)], Stroke::new(3.0, accent));
+    painter.circle_filled(pt(body * 0.80, norm), 1.5, accent);
+    painter.circle_filled(pt(body * 0.30, norm), 1.5, accent);
 
     // value + label (click the value box to type a number)
     let val = p.normalized_value_to_string(norm, true);
@@ -296,4 +310,23 @@ pub fn vbar(ui: &Ui, rect: Rect, level_db: f32, peak_db: f32, lo: f32, hi: f32) 
 pub fn led(ui: &Ui, c: Pos2, on: bool) {
     ui.painter().circle_filled(c, 3.5, if on { WHITE } else { Color32::from_rgb(0x2a, 0x2a, 0x2a) });
     ui.painter().circle_stroke(c, 3.5, Stroke::new(1.0, LINE));
+}
+
+/// Fill the area between a polyline and the horizontal line `base_y`.
+/// egui fills only convex polygons, so a spectrum has to be drawn as a strip of quads.
+pub fn fill_under(painter: &egui::Painter, pts: &[Pos2], base_y: f32, color: Color32) {
+    if pts.len() < 2 {
+        return;
+    }
+    let mut mesh = egui::epaint::Mesh::default();
+    let uv = egui::epaint::WHITE_UV;
+    for w in pts.windows(2) {
+        let (a, b) = (w[0], w[1]);
+        let i = mesh.vertices.len() as u32;
+        for p in [a, b, Pos2::new(b.x, base_y), Pos2::new(a.x, base_y)] {
+            mesh.vertices.push(egui::epaint::Vertex { pos: p, uv, color });
+        }
+        mesh.indices.extend_from_slice(&[i, i + 1, i + 2, i, i + 2, i + 3]);
+    }
+    painter.add(egui::Shape::mesh(mesh));
 }
