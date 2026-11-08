@@ -110,6 +110,7 @@ where
     egui_input: egui::RawInput,
     pointer_pos_in_points: Option<egui::Pos2>,
     current_cursor_icon: baseview::MouseCursor,
+    kb_events: bool,
 
     renderer: Renderer,
 
@@ -215,6 +216,7 @@ where
             start_time,
             egui_input,
             pointer_pos_in_points: None,
+            kb_events: true,
             current_cursor_icon: baseview::MouseCursor::Default,
 
             renderer,
@@ -449,6 +451,16 @@ where
             // TODO: Set mouse cursor for MacOS once baseview supports it.
             #[cfg(not(target_os = "macos"))]
             window.set_mouse_cursor(cursor_icon);
+        }
+
+        // take keyboard events only while egui edits text, so the DAW keeps its shortcuts (space = play)
+        #[cfg(all(unix, not(target_os = "macos")))]
+        {
+            let want = self.egui_ctx.wants_keyboard_input();
+            if want != self.kb_events {
+                self.kb_events = want;
+                window.set_keyboard_events(want);
+            }
         }
 
         // A temporary workaround for keyboard input not working sometimes in Windows.
