@@ -265,27 +265,27 @@ pub fn create(params: Arc<MeterParams>, shared: Arc<Shared>) -> Option<Box<dyn E
                 }
                 painter.text(Pos2::new(g.left() + 8.0, g.top() + 10.0), Align2::LEFT_CENTER, format!("SPECTRUM  ·  {}", ["L+R", "MID", "SIDE", "LEFT", "RIGHT"][p.spec_src.value().to_index()]), mono(9.0), DIM);
                 // controls
-                let cy = c.bottom() - 46.0;
+                let cy = c.bottom() - 58.0;
                 let lbl = |x: f32, y: f32, t: &str| painter.text(Pos2::new(c.left() + x, y), Align2::LEFT_CENTER, t, mono(9.0), DIM);
                 lbl(12.0, cy + 11.0, "VIEW");
                 if let Some(i) = pill_row(ui, Pos2::new(c.left() + 50.0, cy), &["CURVE", "1/3 OCT"], Some(p.spec_mode.value().to_index()), 62.0, 22.0, &["Smooth analyzer curve.", "Third-octave bars (RTA), like a hardware analyzer."]) {
                     set_e(setter, &p.spec_mode, SpecMode::from_index(i));
                 }
-                lbl(206.0, cy + 11.0, "SOURCE");
-                if let Some(i) = pill_row(ui, Pos2::new(c.left() + 260.0, cy), &["L+R", "MID", "SIDE", "L", "R"], Some(p.spec_src.value().to_index()), 46.0, 22.0, &["Mono sum of both channels.", "Centre (mid) only.", "Sides only: what is wide in the mix.", "Left channel.", "Right channel."]) {
+                lbl(226.0, cy + 11.0, "SOURCE");
+                if let Some(i) = pill_row(ui, Pos2::new(c.left() + 280.0, cy), &["L+R", "MID", "SIDE", "L", "R"], Some(p.spec_src.value().to_index()), 46.0, 22.0, &["Mono sum of both channels.", "Centre (mid) only.", "Sides only: what is wide in the mix.", "Left channel.", "Right channel."]) {
                     set_e(setter, &p.spec_src, SpecSrc::from_index(i));
                 }
-                let cy2 = cy + 26.0;
+                let cy2 = cy + 28.0;
                 lbl(12.0, cy2 + 11.0, "SLOPE");
                 if let Some(i) = pill_row(ui, Pos2::new(c.left() + 50.0, cy2), &["0 dB", "3 dB", "4.5 dB"], Some(p.slope.value().to_index()), 52.0, 22.0, &["No tilt: raw spectrum (pink noise falls 3 dB per octave).", "3 dB/oct tilt: pink noise looks flat.", "4.5 dB/oct tilt: typical music looks flat (default)."]) {
                     set_e(setter, &p.slope, Slope::from_index(i));
                 }
-                lbl(222.0, cy2 + 11.0, "SPEED");
-                if let Some(i) = pill_row(ui, Pos2::new(c.left() + 270.0, cy2), &["FAST", "MED", "SLOW"], Some(p.speed.value().to_index()), 50.0, 22.0, &["Quick reaction.", "Balanced.", "Calm, averaged picture."]) {
+                lbl(226.0, cy2 + 11.0, "SPEED");
+                if let Some(i) = pill_row(ui, Pos2::new(c.left() + 280.0, cy2), &["FAST", "MED", "SLOW"], Some(p.speed.value().to_index()), 50.0, 22.0, &["Quick reaction.", "Balanced.", "Calm, averaged picture."]) {
                     set_e(setter, &p.speed, Speed::from_index(i));
                 }
                 let hold = p.hold.value();
-                if pill_tip(ui, Rect::from_min_size(Pos2::new(c.right() - 74.0, cy2), Vec2::new(62.0, 22.0)), "HOLD", hold, "Show the peak-hold line.") {
+                if pill_tip(ui, Rect::from_min_size(Pos2::new(c.left() + 526.0 - 62.0, cy2), Vec2::new(62.0, 22.0)), "HOLD", hold, "Show the peak-hold line.") {
                     set_b(setter, &p.hold, !hold);
                 }
 
