@@ -344,12 +344,13 @@ pub fn create(params: Arc<MeterParams>, shared: Arc<Shared>) -> Option<Box<dyn E
                     Span::Min5 => HISTORY,
                 };
                 sh.history(n_pts, &mut st.hm, &mut st.hs);
-                let (l_lo, l_hi) = (-50.0f32, 0.0f32);
+                let (l_lo, l_hi) = (-60.0f32, 0.0f32);
                 let ly = |v: f32| eg.bottom() - eg.height() * ((v - l_lo) / (l_hi - l_lo)).clamp(0.0, 1.0);
-                for v in [-10.0f32, -20.0, -30.0, -40.0] {
+                for v in [-10.0f32, -20.0, -30.0, -40.0, -50.0] {
                     painter.hline(eg.left()..=eg.right(), ly(v), Stroke::new(1.0, LINE));
                     painter.text(Pos2::new(eg.left() - 5.0, ly(v)), Align2::RIGHT_CENTER, format!("{:.0}", v), mono(9.0), DIM);
                 }
+                let mut target_label: Option<(Rect, std::sync::Arc<egui::Galley>)> = None;
                 if let Some(t) = target {
                     let y = ly(t);
                     let mut x = eg.left();
@@ -357,27 +358,38 @@ pub fn create(params: Arc<MeterParams>, shared: Arc<Shared>) -> Option<Box<dyn E
                         painter.hline(x..=(x + 6.0).min(eg.right()), y, Stroke::new(1.2, Color32::from_white_alpha(120)));
                         x += 12.0;
                     }
-                    painter.text(Pos2::new(eg.right() - 4.0, y - 8.0), Align2::RIGHT_CENTER, format!("target {:.0}", t), mono(9.0), DIM);
+                    let tl = painter.layout_no_wrap(format!("target {:.0}", t), mono(9.0), DIM);
+                    let ty = if y - 8.0 < eg.top() + 20.0 { y + 8.0 } else { y - 8.0 };
+                    let tr = Rect::from_min_size(Pos2::new(eg.right() - 6.0 - tl.size().x, ty - tl.size().y * 0.5), tl.size()).expand2(Vec2::new(3.0, 1.0));
+                    target_label = Some((tr, tl));
                 }
                 let have = sh.published().min(n_pts);
-                let pts_for = |arr: &Vec<f32>| -> Vec<Pos2> {
+                // Values quieter than the bottom of the scale break the line instead of being
+                // squashed onto the bottom edge (silence used to draw a flat line under the labels).
+                let segs_for = |arr: &Vec<f32>| -> Vec<Vec<Pos2>> {
                     let n = arr.len();
-                    let mut v = Vec::with_capacity(n);
+                    let mut out: Vec<Vec<Pos2>> = Vec::new();
+                    let mut cur: Vec<Pos2> = Vec::new();
                     for (i, val) in arr.iter().enumerate() {
-                        if n - i > have || *val < -100.0 {
+                        if n - i > have || !val.is_finite() || *val < l_lo {
+                            if cur.len() > 1 { out.push(std::mem::take(&mut cur)); } else { cur.clear(); }
                             continue;
                         }
-                        v.push(Pos2::new(eg.left() + eg.width() * i as f32 / (n.max(2) - 1) as f32, ly(*val)));
+                        cur.push(Pos2::new(eg.left() + eg.width() * i as f32 / (n.max(2) - 1) as f32, ly(*val)));
                     }
-                    v
+                    if cur.len() > 1 { out.push(cur); }
+                    out
                 };
-                let eclip = painter.with_clip_rect(eg);
-                let (mp, sp) = (pts_for(&st.hm), pts_for(&st.hs));
-                if mp.len() > 1 {
-                    eclip.add(egui::Shape::line(mp, PathStroke::new(1.0, Color32::from_white_alpha(90))));
+                let eclip = painter.with_clip_rect(eg.shrink(1.0));
+                for seg in segs_for(&st.hm) {
+                    eclip.add(egui::Shape::line(seg, PathStroke::new(1.0, Color32::from_white_alpha(90))));
                 }
-                if sp.len() > 1 {
-                    eclip.add(egui::Shape::line(sp, PathStroke::new(2.0, WHITE)));
+                for seg in segs_for(&st.hs) {
+                    eclip.add(egui::Shape::line(seg, PathStroke::new(2.0, WHITE)));
+                }
+                if let Some((tr, tl)) = target_label.take() {
+                    painter.rect_filled(tr, 2.0, Color32::from_rgb(7, 7, 7));
+                    painter.galley(tr.min + Vec2::new(3.0, 1.0), tl, DIM);
                 }
                 painter.text(Pos2::new(eg.left() + 8.0, eg.top() + 10.0), Align2::LEFT_CENTER, "LOUDNESS HISTORY  ·  thin = momentary  ·  bold = short-term  (LUFS)", mono(9.0), DIM);
                 if let Some(i) = pill_row(ui, Pos2::new(e.right() - 12.0 - 2.0 * 64.0 - 4.0, e.bottom() - 24.0), &["1 MIN", "5 MIN"], Some(p.span.value().to_index()), 64.0, 20.0, &["Show the last minute.", "Show the last five minutes."]) {
