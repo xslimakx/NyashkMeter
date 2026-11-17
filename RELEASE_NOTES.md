@@ -1,3 +1,8 @@
+## NyashkMeter 1.0.2
+
+- RMS readouts average over ~300 ms at any sample rate (they were twice as fast at 96 kHz).
+- New reference tests: EBU Tech 3341 cases 1-5 read within 0.1 LU at 44.1 / 48 / 96 kHz, EBU Tech 3342 loudness range cases give exactly 10 / 5 / 20 / 15 LU, true peak of sines whose samples miss the crest reads within -0.1 / +0.15 dB.
+
 ## NyashkMeter 1.0.1
 
 - **Loudness history:** quiet passages and silence no longer draw a line along the bottom edge, below the lowest scale label. The scale now goes down to -60 LUFS with a -50 label, anything quieter leaves a gap, and the target label has its own backing so the lines no longer run through its text.

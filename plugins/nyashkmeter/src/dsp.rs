@@ -115,6 +115,7 @@ pub struct Meter {
     corr_a: f32,
     over_state: bool,
     pub max_m_lin: f32,
+    rms_a: f32,
 }
 
 impl Meter {
@@ -145,6 +146,7 @@ impl Meter {
             corr_a: time_coef(300.0, fs),
             over_state: false,
             max_m_lin: 0.0,
+            rms_a: 1.0 - (-1.0 / (0.3 * fs)).exp(),
         }
     }
 
@@ -190,7 +192,8 @@ impl Meter {
             self.peak_all = self.peak_all.max(s.abs());
             let t = self.tp[i].push(s);
             self.tp_block[i] = self.tp_block[i].max(t);
-            self.sq[i] = self.sq[i] * 0.9998 + s * s * 0.0002;
+            // RMS over ~300 ms at any sample rate (it was a fixed per-sample factor: twice as fast at 96 kHz)
+            self.sq[i] += (s * s - self.sq[i]) * self.rms_a;
         }
         self.sub_e += e;
         let (l, r) = (x[0], x[n - 1]);
