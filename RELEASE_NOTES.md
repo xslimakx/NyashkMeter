@@ -1,3 +1,7 @@
+## NyashkMeter 1.0.3
+
+- Захист від NaN / inf від хоста: один «битий» семпл більше не ламає плагін назавжди (раніше фільтри залишались у NaN і звук пропадав до перезапуску). Тепер один NaN не «отруює» інтегровану гучність, LRA і true peak.
+
 ## NyashkMeter 1.0.2
 
 - RMS readouts average over ~300 ms at any sample rate (they were twice as fast at 96 kHz).

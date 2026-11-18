@@ -113,3 +113,19 @@ fn mono_input_is_measured() {
     // one channel at -23 dBFS peak is 3 LU below the stereo reference
     assert!((m.out.integrated + 26.0 - (20.0 * 0.07f32.log10() + 23.0)).abs() < 0.5, "{}", m.out.integrated);
 }
+
+#[test]
+fn recovers_after_nan_or_inf_from_the_host() {
+    for bad in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
+        let mut m = Meter::new(48000.0);
+        for n in 0..(48000 * 4) {
+            let v = if (100..110).contains(&n) { bad } else { 0.3 * (n as f32 * 0.05).sin() };
+            m.frame(&[v, v], 2);
+        }
+        let o = &m.out;
+        println!("{bad}: M {} S {} I {} LRA {} TP {} RMS {}", o.momentary, o.short_term, o.integrated, o.lra, o.tp_max, o.rms_l);
+        for v in [o.momentary, o.short_term, o.integrated, o.tp_max, o.rms_l, o.rms_r, o.corr, o.peak_max] {
+            assert!(v.is_finite(), "{bad}: {v}");
+        }
+    }
+}

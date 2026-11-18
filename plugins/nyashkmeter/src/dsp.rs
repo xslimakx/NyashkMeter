@@ -183,6 +183,8 @@ impl Meter {
     /// One audio frame. `n` = 1 (mono) or 2.
     #[inline]
     pub fn frame(&mut self, x: &[f32; 2], n: usize) {
+        // a NaN / inf from the host would poison the loudness integrators for good: count it as silence
+        let x = &x.map(|v| if v.is_finite() { v } else { 0.0 });
         let mut e = 0.0;
         for i in 0..n {
             let s = x[i];
