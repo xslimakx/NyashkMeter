@@ -12,7 +12,12 @@ struct State {
 static ST: Mutex<Option<State>> = Mutex::new(None);
 
 pub fn fill(buffer: &mut Buffer, fs: f32) {
-    let mut g = ST.lock().unwrap();
+    // lock-free check first: the audio threads of several instances must never wait on each other
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    if !*ON.get_or_init(|| std::env::var("NYASHK_DEMO").is_ok()) {
+        return;
+    }
+    let Ok(mut g) = ST.try_lock() else { return };
     let st = g.get_or_insert_with(|| State { n: 0, rng: 12345, lp: [0.0; 2], on: std::env::var("NYASHK_DEMO").is_ok() });
     if !st.on {
         return;
