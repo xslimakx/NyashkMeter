@@ -210,10 +210,12 @@ pub fn create(params: Arc<MeterParams>, shared: Arc<Shared>) -> Option<Box<dyn E
                 let at = |arr: &[f32], fa: f32, fb: f32| -> f32 {
                     let (ka, kb) = (fa / bin_hz, fb / bin_hz);
                     if kb - ka < 1.0 {
-                        let kc = (0.5 * (ka + kb)).clamp(1.0, (FFT_N / 2 - 2) as f32);
+                        // between bins: a cubic curve through them (no straight segments)
+                        let kc = (0.5 * (ka + kb)).clamp(1.0, (FFT_N / 2 - 3) as f32);
                         let i = kc.floor() as usize;
                         let t = kc - i as f32;
-                        arr[i] * (1.0 - t) + arr[i + 1] * t
+                        let (p0, p1, p2, p3) = (arr[i - 1], arr[i], arr[i + 1], arr[i + 2]);
+                        0.5 * (2.0 * p1 + (-p0 + p2) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t * t + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t * t * t)
                     } else {
                         let (ka, kb) = ((ka.ceil() as usize).max(1), (kb.floor() as usize).min(FFT_N / 2 - 1));
                         let e: f32 = (ka..=kb).map(|k| 10f32.powf(arr[k] / 10.0)).sum::<f32>() / (kb - ka + 1) as f32;
